@@ -1,7 +1,7 @@
 import pygame
 from src.Constants import Heading
 from src.GameConfig import GRID_BLOCK_DIMENSIONS, WINDOW_DIMENSIONS
-from src.PygameGraphicsUtils import BLACK, WHITE, RED, GREEN, SCORE_FONT, END_FONT
+from src.PygameGraphicsUtils import BLACK, WHITE, RED, GREEN, SCORE_FONT, END_FONT, YELLOW
 from images.PygameDriveOrange import orange_drive_img
 from images.PygameDriveBlue import blue_drive_img
 from images.PygamePlayerDriveOrange import player_orange_drive_img
@@ -64,11 +64,12 @@ class FieldRenderer:
         elif self.field.field_grid[x][y].pod != None: # pod without drive
             self.game_window.blit(pod_yellow_img, (x*GRID_BLOCK_DIMENSIONS[0], y*GRID_BLOCK_DIMENSIONS[1]))
 
-        # highlight target pod
-        if str(self.field.field_grid[x][y].pod) == self.field.target_pod_id:
-            outline_surface = pygame.Surface((GRID_BLOCK_DIMENSIONS[0], GRID_BLOCK_DIMENSIONS[1]), pygame.SRCALPHA, 32)
-            pygame.draw.rect(outline_surface, RED, pygame.Rect(0, 0, GRID_BLOCK_DIMENSIONS[0], GRID_BLOCK_DIMENSIONS[1]), 2)
-            self.game_window.blit(outline_surface, (x*GRID_BLOCK_DIMENSIONS[0], y*GRID_BLOCK_DIMENSIONS[1]))
+            # Highlight uncollected pods
+            pod = self.field.field_grid[x][y].pod
+            if str(pod) not in self.field.collected_pods:
+                outline_surface = pygame.Surface((GRID_BLOCK_DIMENSIONS[0], GRID_BLOCK_DIMENSIONS[1]), pygame.SRCALPHA, 32)
+                pygame.draw.rect(outline_surface, RED, pygame.Rect(0, 0, GRID_BLOCK_DIMENSIONS[0], GRID_BLOCK_DIMENSIONS[1]), 2)
+                self.game_window.blit(outline_surface, (x*GRID_BLOCK_DIMENSIONS[0], y*GRID_BLOCK_DIMENSIONS[1]))
             
         # Draw all goal locations
         if [x, y] in self.field.goal_coords_list:
@@ -76,6 +77,16 @@ class FieldRenderer:
 
         if self.field.field_grid[x][y].is_crash:
             pygame.draw.circle(self.game_window, RED, (x*GRID_BLOCK_DIMENSIONS[0]+GRID_BLOCK_DIMENSIONS[0]//2, y*GRID_BLOCK_DIMENSIONS[1]+GRID_BLOCK_DIMENSIONS[1]//2), GRID_BLOCK_DIMENSIONS[1]//3)
+
+        # Draw lines connecting pods to their target goals
+        if self.field.field_grid[x][y].pod != None:
+            pod = self.field.field_grid[x][y].pod
+            if pod.target_goal:
+                start_pos = (x*GRID_BLOCK_DIMENSIONS[0] + GRID_BLOCK_DIMENSIONS[0]//2,
+                            y*GRID_BLOCK_DIMENSIONS[1] + GRID_BLOCK_DIMENSIONS[1]//2)
+                end_pos = (pod.target_goal[0]*GRID_BLOCK_DIMENSIONS[0] + GRID_BLOCK_DIMENSIONS[0]//2,
+                          pod.target_goal[1]*GRID_BLOCK_DIMENSIONS[1] + GRID_BLOCK_DIMENSIONS[1]//2)
+                pygame.draw.line(self.game_window, YELLOW, start_pos, end_pos, 1)
 
     def get_drive_image_for_drive(self, drive):
         if str(drive) == self.field.player_id:
@@ -91,7 +102,14 @@ class FieldRenderer:
                     pygame.draw.rect(self.game_window, WHITE, rect, 1)
 
     def update_score_banner(self, score):
-        text_surface = SCORE_FONT.render(f'Level: {self.level_name} | Using agent {str(self.agent_class.__name__)}  |  Running Cost = {score}', False, (255, 255, 255))
+        """Update score banner with pod collection progress"""
+        total_pods = len(self.field.pod_locations_map)
+        collected_pods = len(self.field.collected_pods)
+        text_surface = SCORE_FONT.render(
+            f'Level: {self.level_name} | Pods: {collected_pods}/{total_pods} | Cost = {score}', 
+            False, 
+            (255, 255, 255)
+        )
         text_surface = pygame.transform.flip(text_surface, False, True)
         self.game_window.blit(text_surface, (10, WINDOW_DIMENSIONS[1]+5))
 

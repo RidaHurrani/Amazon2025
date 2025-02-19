@@ -26,33 +26,27 @@ class GameSimulationOrchestrator:
         # Initialize game field
         field_grid_width = math.floor(WINDOW_DIMENSIONS[0]/GRID_BLOCK_DIMENSIONS[0])
         field_grid_height = math.floor(WINDOW_DIMENSIONS[1]/GRID_BLOCK_DIMENSIONS[1])
-        self.field = Field(field_grid_width, field_grid_height, is_pod_required_to_win=level.is_target_pod_required)
+        self.field = Field(field_grid_width, field_grid_height)
         self.field.set_sensor_range(level.sensor_range)
 
         # Initialize game objects
         id_provider = GameIdProvider()
-        self.field.spawn_goal()
+        self.field.spawn_goal(level.num_pods)
         
         player_id = id_provider.get_new_id()
-        self.player_drive = drive_agent(player_id, level.is_target_pod_required)
+        self.player_drive = drive_agent(player_id)
         self.field.spawn_player(self.player_drive, player_id)
-        
+
         self.ai_drive_list = []
         for i in range(level.num_ai_drives):
-            ai_drive = AIDrive(id_provider.get_new_id(), level.is_target_pod_required)
+            ai_drive = AIDrive(id_provider.get_new_id())
             self.field.spawn_new_ai_drive(ai_drive)
             self.ai_drive_list.append(ai_drive)
 
-        self.pod_list = []
-        pod_id_provider = GameIdProvider()
-        if level.is_target_pod_required:
-            pod = Pod(game_id=pod_id_provider.get_new_id())
-            self.field.spawn_target_pod(pod)
-            print('spawned target pod')
+        # Spawn all pods
         for i in range(level.num_pods):
-            pod = Pod(game_id=pod_id_provider.get_new_id())
+            pod = Pod(pod_id=self.field.pod_id_provider.get_new_id())
             self.field.spawn_new_pod(pod)
-            self.pod_list.append(pod)
 
         # Create game renderer
         self.renderer = FieldRenderer(self.field, self.game_window, drive_agent, level.name)

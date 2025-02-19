@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from typing import Optional, Tuple
 
 
 @dataclass
 class Pod:
-    game_id: int
+    pod_id: int
+    original_position: Optional[Tuple[int, int]] = None
+    target_goal: Optional[Tuple[int, int]] = None
     contents = []
-    is_goal_pod = False

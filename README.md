@@ -16,11 +16,14 @@ line by running `python3 main.py`.
 1. Make sure you have Python installed (preferably 3.9 or later)
    - Check with `python3 --version`
    - https://www.python.org/downloads/release/python-3115/
-2. Fork the game source code ("Fork" button on top right of this GitHub page)
-   - Once you created a fork in your own GitHub repository
-     - On your computer, run:
-     - `git clone <your_fork_repo>`
-     - `cd <your_fork_repo>`
+2. Download the game source code
+   - Command line:
+     - Make a new directory
+     - `git clone https://github.com/sam-zlota/AR_Day_Activity.git`
+   - Browser:
+     - Open https://github.com/sam-zlota/AR_Day_Activity
+     - Click the “<> Code” button dropdown menu and select ”Download ZIP”
+     - Extract the ZIP into a new directory
 3. Install requirements:
    - Command line: `python3 -m pip install -r requirements.txt`
 4. Run the game:
@@ -52,9 +55,9 @@ the structure of this dict:
         SensorData.DRIVE_LOCATIONS: [[x1, y1], [x2, y2], ...],
         SensorData.POD_LOCATIONS: [[x1, y1], [x2, y2], ...],
         SensorData.PLAYER_LOCATION: [x, y],
-        SensorData.GOAL_LOCATION: [x, y],
-        SensorData.TARGET_POD_LOCATION: [x, y],
-        SensorData.DRIVE_LIFTED_POD_PAIRS: [[drive_id_1, pod_id_1], [drive_id_2, pod_id_2], ...]
+        SensorData.GOAL_LOCATIONS: [[x1, y1], [x2, y2], ...],  # List of goal locations
+        SensorData.DRIVE_LIFTED_POD_PAIRS: [[drive_id_1, pod_id_1], [drive_id_2, pod_id_2], ...], # List of drivers id to the pod id
+        SensorData.POD_TARGET_GOALS: {pod_id_1: [x1, y1], pod_id_2: [x2, y2], ...} # List of pod locations
     }
 
 Use this data to stay within the field, avoid collisions, and find the goal 
@@ -63,7 +66,7 @@ Use this data to stay within the field, avoid collisions, and find the goal
 In the top level directory of the game code is a file: player_agents_list.txt. The main.py function will try to run 
 all levels of the game for every agent class listed in this file. Agents must be separated by a newline. If an agent 
 fails a level, the remaining levels will not be run
-- [TIP] To test your code faster, modify the agent list file to only have your agent
+- [TIP] To test your code faster, modify the agent list file to only have your agent. (This should already the case)
 - [TIP] To test one level at a time, comment out unwanted levels in the GAME_LEVELS variable in src/GameConfig.py
 - [TIP] To test your code faster, you can increase the FPS limit in src/GameConfig.py
 
@@ -72,4 +75,19 @@ fails a level, the remaining levels will not be run
 - Each move costs 1 point
 - Score is displayed in the upper left corner of the game window
 - The game will timeout after 1000 turns
-- Winners are those that finished all levels in the fewest amount of steps (points)
+- Agent scores are sorted in the following order:
+  - Number of levels completed
+  - Tiebreak 1: Score for last level(Less score means better) 
+  - Tiebreak 2: Total score for all levels(Less score means better)
+  - 
+### Example Agent Class
+DfsSolverAgent.py is provided in the source code. It uses Depth First Search (DFS) to find a path from the player 
+location to the goal. Then it executes that path. You can reference it as a starting point to implement YourAgent Class.
+
+In addition, the find shortest path method is implemented in the YourAgent class.
+- [TIP] Think about implementing collision logic
+  - will_next_state_collide() function is yet to be implemented
+- [TIP] Think about different search strategies
+  - Run the code at least once to see the inefficient path produced by DFS search
+  - Start with simple solutions. ex: BFS
+

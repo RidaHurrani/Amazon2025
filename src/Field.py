@@ -1,46 +1,49 @@
 import random
-from src.AIDrive import AIDrive
-from src.Constants import DriveMove, Heading, SensorData, MOVE_TO_HEADING_MAP
+from src.Constants import DriveMove, SensorData, MOVE_TO_HEADING_MAP
 from src.DriveState import DriveState
 from src.GameConfig import POD_PICKUP_PROBABILITY, MIN_GOAL_DIST
 from src.GameTile import GameTile
-from src.Pod import Pod
 from src.Utils import manhattan_dist_2D
+from src.GameIdProvider import GameIdProvider
 
 
 SENSOR_DATA_FILTER_FIELDS = [
     SensorData.FIELD_BOUNDARIES,
     SensorData.DRIVE_LOCATIONS,
-    SensorData.POD_LOCATIONS,
-    SensorData.DRIVE_LIFTED_POD_PAIRS
+    SensorData.REAL_TIME_POD_LOCATIONS,
+    SensorData.DRIVE_LIFTED_POD_PAIRS,
+    SensorData.POD_TARGET_GOALS
 ]
 
 class Field:
-    def __init__(self, field_grid_width, field_grid_height, is_pod_required_to_win=False):
+    def __init__(self, field_grid_width, field_grid_height):
         # Initialize backing grid
-        self.is_pod_required_to_win = is_pod_required_to_win
         self.field_grid = [[GameTile(drive=None, pod=None, is_goal=False) for row in range(field_grid_height)] for col in range(field_grid_width)]
         self.drive_pod_pairings_map = {} # key = drive object ID, val = Pod currently lifted by drive
         self.drive_states_map = {} # key = drive object ID, val = DriveState object for drive
         self.pod_locations_map = {} # key = pod object ID, val = [x, y] coords of pod
         self.drive_to_game_id_map = {} # key = drive object ID, val = assigned game id
         self.player_id = ''
-        self.target_pod_id = ''
-        self.can_ai_lift_target_pod = False
         self.field_boundary_coords = self.build_list_of_field_boundaries()
         self.sensor_range = -1
-
+        self.pods = []
         self.goal_coords_list = []
-
+        self.collected_pods = set()  # Set of collected pod IDs
+        
+        # Add ID providers
+        self.pod_id_provider = GameIdProvider()
 
     def set_sensor_range(self, sensor_range):
         self.sensor_range = sensor_range
 
-    def spawn_goal(self):
-        num_goals = random.randint(2, 5)  # Spawn between 2 and 5 goals
+    def spawn_goal(self, num_goals):
+        """Spawn one goal for each pod we'll create"""
         for _ in range(num_goals):
             x = random.randint(0, len(self.field_grid) - 1)
             y = random.randint(0, len(self.field_grid[0]) - 1)
+            while any(manhattan_dist_2D([x, y], goal) < MIN_GOAL_DIST for goal in self.goal_coords_list):
+                x = random.randint(0, len(self.field_grid) - 1)
+                y = random.randint(0, len(self.field_grid[0]) - 1)
             self.field_grid[x][y].is_goal = True
             self.goal_coords_list.append([x, y])
 
@@ -80,32 +83,42 @@ class Field:
 
         self.field_grid[x][y].pod = pod
         self.pod_locations_map[str(pod)] = [x, y]
-        self.target_pod_id = str(pod)
 
         if can_other_drives_lift == True:
-            self.can_ai_lift_target_pod = True
             if self.field_grid[x][y].drive != None:
                 if random.uniform(0, 1) < POD_PICKUP_PROBABILITY: # start with pod on drive
                     self.drive_pod_pairings_map[str(self.field_grid[x][y].drive)] = pod
 
     def spawn_new_pod(self, pod):
+        """Spawn a new pod and assign it a unique target goal"""
+        # Find spawn location
         x = random.randint(0, len(self.field_grid) - 1)
         y = random.randint(0, len(self.field_grid[0]) - 1)
-        while self.field_grid[x][y].pod != None: 
-            y = random.randint(0, len(self.field_grid[0])-1)
-            x = random.randint(0, len(self.field_grid)-1)
+        while self.field_grid[x][y].pod != None or self.field_grid[x][y].drive != None:
+            x = random.randint(0, len(self.field_grid) - 1)
+            y = random.randint(0, len(self.field_grid[0]) - 1)
+        pod.original_position = tuple([x, y])
+        # Assign a unique target goal to this pod
+        available_goals = [goal for goal in self.goal_coords_list 
+                          if not any(self.field_grid[i][j].pod and 
+                                   self.field_grid[i][j].pod.target_goal == tuple(goal)
+                                   for i in range(len(self.field_grid))
+                                   for j in range(len(self.field_grid[0])))]
+
+        if available_goals:
+            pod.target_goal = tuple(random.choice(available_goals))
+            print(f"Pod {pod.pod_id} assigned to goal {pod.target_goal}")
+
+        self.pods.append(pod)
         self.field_grid[x][y].pod = pod
         self.pod_locations_map[str(pod)] = [x, y]
 
         if self.field_grid[x][y].drive != None and str(self.field_grid[x][y].drive) != self.player_id:
-            if random.uniform(0, 1) < POD_PICKUP_PROBABILITY: # start with pod on drive
+            if random.uniform(0, 1) < POD_PICKUP_PROBABILITY:
                 self.drive_pod_pairings_map[str(self.field_grid[x][y].drive)] = pod
 
     def is_drive_player(self, drive):
         return str(drive) == self.player_id
-
-    def is_pod_target(self, pod):
-        return str(pod) == self.target_pod_id
 
     def process_move_for_drive(self, move, drive):
         current_drive_state = self.drive_states_map[str(drive)]
@@ -122,17 +135,24 @@ class Field:
             # Process Pod operations before moves
             if move == DriveMove.LIFT_POD:
                 if self.field_grid[current_drive_state.x][current_drive_state.y].pod != None:
-                    if self.is_pod_target(self.field_grid[current_drive_state.x][current_drive_state.y].pod):
-                        if self.is_drive_player(drive) or self.can_ai_lift_target_pod:
-                            self.drive_pod_pairings_map[str(drive)] = self.field_grid[current_drive_state.x][current_drive_state.y].pod
-                    else:
-                        self.drive_pod_pairings_map[str(drive)] = self.field_grid[current_drive_state.x][current_drive_state.y].pod
+                    self.drive_pod_pairings_map[str(drive)] = self.field_grid[current_drive_state.x][current_drive_state.y].pod
+                    print(f"Picked up pod at {current_drive_state.x}, {current_drive_state.y}")
                 else:
                     if self.is_drive_player(drive):
                         print(f'Player drive {drive} tried picking up a pod, but no pod was present at current state')
             elif move == DriveMove.DROP_POD:
                 if self.is_drive_carrying_a_pod(drive):
-                    del self.drive_pod_pairings_map[str(drive)]
+                    pod = self.drive_pod_pairings_map[str(drive)]
+                    current_pos = (current_drive_state.x, current_drive_state.y)
+                    
+                    # Only allow dropping at pod's target goal
+                    if current_pos == pod.target_goal:
+                        self.collected_pods.add(str(pod))
+                        del self.drive_pod_pairings_map[str(drive)]
+                        print(f"Pod {pod.pod_id} delivered to its target goal {pod.target_goal}")
+                    else:
+                        print(f"Can't drop pod here - not its target goal {pod.target_goal}")
+                        return True  # Don't allow dropping at wrong location
                 else:
                     if self.is_drive_player(drive):
                         print(f'Player drive {drive} tried dropping a pod, but wasn\'t carrying one')
@@ -144,7 +164,7 @@ class Field:
 
                 current_drive_state.update_state_from_move(move)
                 self.field_grid[current_drive_state.x][current_drive_state.y].drive = drive
-                self.drive_states_map[str(drive)] = current_drive_state # redundant assignment
+                self.drive_states_map[str(drive)] = current_drive_state
                 if self.is_drive_carrying_a_pod(drive):
                     self.field_grid[current_drive_state.x][current_drive_state.y].pod = self.drive_pod_pairings_map[str(drive)]
                     self.pod_locations_map[str(self.field_grid[current_drive_state.x][current_drive_state.y].pod)] = [current_drive_state.x, current_drive_state.y]
@@ -177,31 +197,32 @@ class Field:
         return str(drive) in self.drive_pod_pairings_map.keys()
 
     def generate_sensor_data_for_drive(self, drive):
+        """Generate sensor data dictionary for a specific drive"""
         sensor_data = {
-            SensorData.FIELD_BOUNDARIES: self.field_boundary_coords,  
-            SensorData.DRIVE_LOCATIONS: [], 
-            SensorData.POD_LOCATIONS: [],
+            SensorData.FIELD_BOUNDARIES: self.field_boundary_coords,
+            SensorData.DRIVE_LOCATIONS: [],
+            SensorData.REAL_TIME_POD_LOCATIONS: [],
             SensorData.DRIVE_LIFTED_POD_PAIRS: self.build_drive_lifted_pod_pairs(),
-            SensorData.PLAYER_LOCATION: [],
-            # SensorData.GOAL_LOCATION: self.goal_coords,
+            SensorData.PLAYER_LOCATION: [self.drive_states_map[self.player_id].x, self.drive_states_map[self.player_id].y],
             SensorData.GOAL_LOCATIONS: self.goal_coords_list,
-            # SensorData.GOAL_LOCATION: self.goal_coords, 
-            SensorData.TARGET_POD_LOCATION: self.get_target_pod_info()
+            SensorData.POD_TARGET_GOALS: self.pods  # Add pod-goal mapping
         }
 
-        for d in self.drive_states_map.keys():
-            x = self.drive_states_map[str(d)].x
-            y = self.drive_states_map[str(d)].y
-            if str(drive) == d:
-                sensor_data[SensorData.PLAYER_LOCATION] = [x, y]
-            else:
-                sensor_data[SensorData.DRIVE_LOCATIONS].append([x, y])
 
+
+        # Add all drive locations except the requesting drive
+        for d in self.drive_states_map.keys():
+            if d != str(drive):
+                sensor_data[SensorData.DRIVE_LOCATIONS].append(
+                    [self.drive_states_map[d].x, self.drive_states_map[d].y]
+                )
+
+        # Add all pod locations
         for p in self.pod_locations_map.keys():
-            sensor_data[SensorData.POD_LOCATIONS].append(self.pod_locations_map[p])
+            sensor_data[SensorData.REAL_TIME_POD_LOCATIONS].append(self.pod_locations_map[p])
 
         if self.sensor_range > 0:
-            sensor_data = self.filter_sensor_data_for_sensor_range(sensor_data)
+            self.filter_sensor_data_for_sensor_range(sensor_data)
 
         return sensor_data
 
@@ -209,13 +230,13 @@ class Field:
         drive_lifted_pod_pair_list = []
         for drive_str in self.drive_states_map.keys():
             if drive_str in self.drive_pod_pairings_map.keys():
-                drive_lifted_pod_pair_list.append([self.drive_to_game_id_map[drive_str], self.drive_pod_pairings_map[drive_str].game_id]) 
+                drive_lifted_pod_pair_list.append([self.drive_to_game_id_map[drive_str], self.drive_pod_pairings_map[drive_str].pod_id])
 
         return drive_lifted_pod_pair_list
 
     def get_target_pod_info(self):
-        if self.target_pod_id != '':
-            return self.pod_locations_map[self.target_pod_id]
+        if self.pod_locations_map:
+            return self.pod_locations_map[next(iter(self.pod_locations_map))]
         else:
             return []
 
@@ -225,25 +246,38 @@ class Field:
         for data_field in SENSOR_DATA_FILTER_FIELDS:
             new_data = []
             for val in sensor_data[data_field]:
-                if round(euclidean_dist_2D(player_location, val)) <= self.sensor_range:
+                if round(manhattan_dist_2D(player_location, val)) <= self.sensor_range:
                     new_data.append(val)
             sensor_data[data_field] = new_data
 
     def is_winning_condition(self):
-        if self.is_pod_required_to_win and self.target_pod_id != '':
-            target_pod_coords = self.pod_locations_map[self.target_pod_id]
-            target_state = target_pod_coords
-        else:
-            player_state = self.drive_states_map[self.player_id]
-            target_state = [player_state.x, player_state.y]
-
-        # Check if the target state matches any of the goal coordinates
-        for goal_coords in self.goal_coords_list:
-            if target_state[0] == goal_coords[0] and target_state[1] == goal_coords[1]:
-                return True
-
-        return False
-
+        """Check if all pods have been delivered to their specific goals"""
+        # First check if all pods have been collected
+        if len(self.collected_pods) != len(self.pod_locations_map):
+            return False
+        
+        # Then check if each pod is at its target goal
+        for pod_id, pod_loc in self.pod_locations_map.items():
+            # Skip if pod is being carried
+            if any(str(carried_pod) == pod_id for carried_pod in self.drive_pod_pairings_map.values()):
+                return False
+            
+            # Find the pod object
+            pod = None
+            for x in range(len(self.field_grid)):
+                for y in range(len(self.field_grid[0])):
+                    if self.field_grid[x][y].pod and str(self.field_grid[x][y].pod) == pod_id:
+                        pod = self.field_grid[x][y].pod
+                        break
+                if pod:
+                    break
+                
+            # Check if pod is at its target goal
+            if pod and pod.target_goal:
+                if tuple(pod_loc) != pod.target_goal:
+                    return False
+                
+        return True
 
     def build_list_of_field_boundaries(self):
         # Add top and bottom boundaries
@@ -261,4 +295,11 @@ class Field:
             right_boundary.append([len(self.field_grid), i])
 
         return bottom_boundary + left_boundary + top_boundary + right_boundary
+    
+    def spawn_target_pods(self, num_pods):
+        """Spawn specific pods that need to be collected"""
+        for _ in range(num_pods):
+            pod = Pod(game_id=self.pod_id_provider.get_new_id(), is_target=True)
+            self.spawn_new_pod(pod)
+            self.collected_pods.add(str(pod))
     

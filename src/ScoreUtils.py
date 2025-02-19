@@ -38,10 +38,9 @@ def get_best_agents_and_score_aggregations(results_dict):
         for agent in max_levels_completed_agents:
             best_agents_dict[agent] = {
                 'last_level_score': results_dict[agent][GAME_LEVELS[max_levels_completed-1].name], 
-                'total_score': sum_score_for_all_completed_levels(results_dict[agent]), 
                 'last_level_name': last_level_name
             }
-        best_agents = sorted(best_agents_dict, key=lambda k: (best_agents_dict[k]['last_level_score'], best_agents_dict[k]['total_score']))
+        best_agents = sorted(best_agents_dict, key=lambda k: (best_agents_dict[k]['last_level_score']))
         return best_agents, best_agents_dict
     else:
         return {}
@@ -101,4 +100,4 @@ def show_end_screen(best_agents_scores):
     render_text_wrapping_lines(end_game_text, game_window)
 
     pygame.display.update()
-    time.sleep(100)
+    time.sleep(1)

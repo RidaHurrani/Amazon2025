@@ -17,13 +17,15 @@ class Heading(Enum):
     WEST = 3
 
 class SensorData(Enum):
-    FIELD_BOUNDARIES = 0
-    DRIVE_LOCATIONS = 1
-    POD_LOCATIONS = 2
-    DRIVE_LIFTED_POD_PAIRS = 3
-    PLAYER_LOCATION = 4
-    GOAL_LOCATIONS = 5
-    TARGET_POD_LOCATION = 6
+    FIELD_BOUNDARIES = 'field_boundaries'
+    DRIVE_LOCATIONS = 'drive_locations'
+    REAL_TIME_POD_LOCATIONS = 'pod_locations'
+    PLAYER_LOCATION = 'player_location'
+    GOAL_LOCATIONS = 'goal_locations'
+    GOAL_LOCATION = 'goal_location'  # Kept for compatibility
+    TARGET_POD_LOCATION = 'target_pod_location'
+    DRIVE_LIFTED_POD_PAIRS = 'drive_lifted_pod_pairs'
+    POD_TARGET_GOALS = 'pod_target_goals'  # New field for pod-goal assignments
 
 
 MOVE_TO_HEADING_MAP = {
