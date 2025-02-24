@@ -19,6 +19,11 @@ class YourAgent(DriveInterface):
         self.collected_pods = set()     # Delivered pod IDs
         self.carrying_pod_id = None     # ID of the pod we're carrying
 
+    def is_carrying_pod(self, sensor_data: dict) -> bool:
+        """Check if we're carrying a pod"""
+        return any(pair[0] == self.drive_id for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS])
+
+
     def find_shortest_path(self, start: Tuple[int, int], goals: List[List[int]],
                           sensor_data: dict) -> List[Tuple[int, int]]:
         """
