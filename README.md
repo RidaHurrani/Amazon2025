@@ -79,7 +79,6 @@ fails a level, the remaining levels will not be run
   - Number of levels completed
   - Tiebreak 1: Score for last level(Less score means better) 
   - Tiebreak 2: Total score for all levels(Less score means better)
-  - 
 ### Example Agent Class
 DfsSolverAgent.py is provided in the source code. It uses Depth First Search (DFS) to find a path from the player 
 location to the goal. Then it executes that path. You can reference it as a starting point to implement YourAgent Class.
@@ -91,3 +90,5 @@ In addition, the find shortest path method is implemented in the YourAgent class
   - Run the code at least once to see the inefficient path produced by DFS search
   - Start with simple solutions. ex: BFS
 
+### Submission
+Once your code is ready, submit for evaluation using this google form: https://forms.gle/4V5ttpQFLyexmVQY6
