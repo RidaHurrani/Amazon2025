@@ -5,25 +5,20 @@ from src.Constants import DriveMove, SensorData
 
 class DfsSolverAgent(DriveInterface):
 
-    def __init__(self, game_id: int, is_advanced_mode: bool):
+    def __init__(self, game_id: int):
         # Constructor for player
         # Player ID will always be 0
         self.game_id  = game_id
         self.path = []
         self.field_limits = []
         self.path_move_index = 0
-        self.need_to_find_target_pod = is_advanced_mode
 
     def get_next_move(self, sensor_data: dict) -> DriveMove:
         # Main function called by game orchestrator
         # Returns a DriveMove enum value
         if len(self.path) == 0:
-            if self.need_to_find_target_pod:
-                # Advanced mode - Need to find the target pod and bring it to the goal
-                raise Exception('Advanced mode solver not implemented yet for DfsSolverAgent')
-            else:
-                # This example uses the first goal location in the list.
-                self.dfs_solve_path_to_goal(sensor_data, sensor_data[SensorData.GOAL_LOCATIONS][0])
+            # This example uses the first goal location in the list.
+            self.dfs_solve_path_to_goal(sensor_data, sensor_data[SensorData.GOAL_LOCATIONS][0])
 
         next_move, next_state = self.get_move_for_next_state_in_path()
         if self.will_next_state_collide(next_state, sensor_data):
