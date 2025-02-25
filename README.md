@@ -19,9 +19,9 @@ line by running `python3 main.py`.
 2. Download the game source code
    - Command line:
      - Make a new directory
-     - `git clone https://github.com/sam-zlota/AR_Day_Activity.git`
+     - `git clone https://github.com/collinwzw/AR_Day_2025.git`
    - Browser:
-     - Open https://github.com/sam-zlota/AR_Day_Activity
+     - Open https://github.com/collinwzw/AR_Day_2025
      - Click the “<> Code” button dropdown menu and select ”Download ZIP”
      - Extract the ZIP into a new directory
 3. Install requirements:
