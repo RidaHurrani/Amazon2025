@@ -58,7 +58,11 @@ for agent_class_str in agent_class_string_list:
 
 print(f'Simulation complete, results: {json.dumps(agent_results_dict, indent=2)}')
 
-winning_agents, winning_agents_scores = get_best_agents_and_score_aggregations(agent_results_dict)
+try:
+    winning_agents, winning_agents_scores = get_best_agents_and_score_aggregations(agent_results_dict)
+except ValueError:
+    print('FAILED level 1. See errors above ^ or try adding some debug logs to figure out what went wrong :)')
+    exit(1)
 print(f'\nBest agents = {winning_agents}')
 show_end_screen(winning_agents_scores)
 

@@ -5,6 +5,7 @@ from src.GameConfig import POD_PICKUP_PROBABILITY, MIN_GOAL_DIST
 from src.GameTile import GameTile
 from src.Utils import manhattan_dist_2D
 from src.GameIdProvider import GameIdProvider
+from src.Pod import Pod
 
 
 SENSOR_DATA_FILTER_FIELDS = [
@@ -89,7 +90,7 @@ class Field:
                 if random.uniform(0, 1) < POD_PICKUP_PROBABILITY: # start with pod on drive
                     self.drive_pod_pairings_map[str(self.field_grid[x][y].drive)] = pod
 
-    def spawn_new_pod(self, pod):
+    def spawn_new_pod(self, pod_id: int):
         """Spawn a new pod and assign it a unique target goal"""
         # Find spawn location
         x = random.randint(0, len(self.field_grid) - 1)
@@ -97,7 +98,8 @@ class Field:
         while self.field_grid[x][y].pod != None or self.field_grid[x][y].drive != None:
             x = random.randint(0, len(self.field_grid) - 1)
             y = random.randint(0, len(self.field_grid[0]) - 1)
-        pod.original_position = tuple([x, y])
+        original_position = (x, y)
+        pod = Pod(pod_id, original_position)
         # Assign a unique target goal to this pod
         available_goals = [goal for goal in self.goal_coords_list 
                           if not any(self.field_grid[i][j].pod and 
@@ -121,6 +123,8 @@ class Field:
         return str(drive) == self.player_id
 
     def process_move_for_drive(self, move, drive):
+        # Debug log:
+        # print("Received move:", move)
         current_drive_state = self.drive_states_map[str(drive)]
 
         if self.will_next_move_crash(move, drive):
@@ -295,11 +299,4 @@ class Field:
             right_boundary.append([len(self.field_grid), i])
 
         return bottom_boundary + left_boundary + top_boundary + right_boundary
-    
-    def spawn_target_pods(self, num_pods):
-        """Spawn specific pods that need to be collected"""
-        for _ in range(num_pods):
-            pod = Pod(game_id=self.pod_id_provider.get_new_id(), is_target=True)
-            self.spawn_new_pod(pod)
-            self.collected_pods.add(str(pod))
     

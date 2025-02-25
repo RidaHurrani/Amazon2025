@@ -1,31 +1,41 @@
+from src.Pod import Pod
 from src.DriveInterface import DriveInterface
 from src.Constants import DriveMove, SensorData
 from src.Utils import manhattan_dist_2D
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 import heapq
+
 
 class YourAgent(DriveInterface):
 
     def __init__(self, drive_id: int):
         """
         Constructor for YourAgent
-
-        Arguments:
-        game_id -- a unique value passed to the player drive, you do not have to do anything with it, but will have access.
         """
         self.drive_id = drive_id
         self.path: List[Tuple[int, int]] = []
-        self.current_target_pod = None  # Pod we're targeting (for pickup/drop)
-        self.collected_pods = set()     # Delivered pod IDs
-        self.carrying_pod_id = None     # ID of the pod we're carrying
+
+        # Pod we're targeting (for pickup/drop)
+        # None if we don't have a target
+        self.current_target_pod: Optional[Pod] = None
+
+        # Delivered pod IDs
+        self.collected_pods = set()
+
+        # ID of the pod we're carrying
+        # None if we are not currently carrying a pod
+        self.carrying_pod_id: Optional[int] = None
 
     def is_carrying_pod(self, sensor_data: dict) -> bool:
         """Check if we're carrying a pod"""
-        return any(pair[0] == self.drive_id for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS])
+        return any(
+            pair[0] == self.drive_id
+            for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS]
+        )
 
-
-    def find_shortest_path(self, start: Tuple[int, int], goals: List[List[int]],
-                          sensor_data: dict) -> List[Tuple[int, int]]:
+    def find_shortest_path(
+        self, start: Tuple[int, int], goals: List[List[int]], sensor_data: dict
+    ) -> List[Tuple[int, int]]:
         """
         Finds the shortest path from a starting position to the nearest goal using the A* search algorithm
         with collision avoidance.
@@ -91,7 +101,7 @@ class YourAgent(DriveInterface):
             sensor_data = {
                 SensorData.FIELD_BOUNDARIES: [[-1, -1], [-1, 0], ...],
                 SensorData.DRIVE_LOCATIONS: [[x1, y1], [x2, y2], ...],
-                SensorData.POD_LOCATIONS: [[x1, y1], [x2, y2], ...],
+                SensorData.REAL_TIME_POD_LOCATIONS: [[x1, y1], [x2, y2], ...],
                 SensorData.PLAYER_LOCATION: [x, y],
                 SensorData.GOAL_LOCATIONS: [[x1, y1], [x2, y2], ...],  # List of goal locations
                 SensorData.DRIVE_LIFTED_POD_PAIRS: [[drive_id_1, pod_id_1], [drive_id_2, pod_id_2], ...], # List of drivers id to the pod id

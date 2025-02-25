@@ -45,8 +45,7 @@ class GameSimulationOrchestrator:
 
         # Spawn all pods
         for i in range(level.num_pods):
-            pod = Pod(pod_id=self.field.pod_id_provider.get_new_id())
-            self.field.spawn_new_pod(pod)
+            self.field.spawn_new_pod(self.field.pod_id_provider.get_new_id())
 
         # Create game renderer
         self.renderer = FieldRenderer(self.field, self.game_window, drive_agent, level.name)

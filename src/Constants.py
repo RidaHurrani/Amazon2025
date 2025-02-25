@@ -22,8 +22,6 @@ class SensorData(Enum):
     REAL_TIME_POD_LOCATIONS = 'pod_locations'
     PLAYER_LOCATION = 'player_location'
     GOAL_LOCATIONS = 'goal_locations'
-    GOAL_LOCATION = 'goal_location'  # Kept for compatibility
-    TARGET_POD_LOCATION = 'target_pod_location'
     DRIVE_LIFTED_POD_PAIRS = 'drive_lifted_pod_pairs'
     POD_TARGET_GOALS = 'pod_target_goals'  # New field for pod-goal assignments
 
