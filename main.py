@@ -30,6 +30,7 @@ with open('player_agents_list.txt', 'r') as f:
 agent_results_dict = {}
 for agent_class_str in agent_class_string_list:
     print(f'Starting simulator for agent = {agent_class_str}, with random seed = {RANDOM_SEED}')
+    print("------ Press Ctrl-C in this terminal to force close the game ------")
     score_dict = {}
     has_failed = False
     for level in GAME_LEVELS:
