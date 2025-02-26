@@ -119,6 +119,250 @@ class YourAgent(DriveInterface):
             DriveMove.LIFT_POD – If a pod is in the same tile, pick it up. The pod will now move with the drive until it is dropped
             DriveMove.DROP_POD – If a pod is in the same tile, drop it. The pod will now stay in this position until it is picked up
         """
+
+        # player_x, player_y = sensor_data[SensorData.PLAYER_LOCATION]
+        # player_pos = (player_x, player_y)
+
+        # self.carrying_pod_id = next(
+        #     (pair[1] for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS] if pair[0] == self.drive_id), 
+        #     None
+        # )
+
+        # # self.carrying_pod_id = None
+        # # for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS]:
+        # #     if pair[0] == self.drive_id:
+        # #         self.carrying_pod_id = pair[1]
+        # #         break
+
+        # carrying_pod = self.carrying_pod_id is not None
+
+        # if carrying_pod:
+        #     goals = sensor_data[SensorData.GOAL_LOCATIONS]
+        #     path = self.find_shortest_path(player_pos, goals, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         # self.carrying_pod_id = NONE
+
+        #         return DriveMove.DROP_POD
+        # else:
+        #     pods = sensor_data[SensorData.REAL_TIME_POD_LOCATIONS]
+
+        #     if not pods:
+        #         return DriveMove.NONE  # No more pods to collect
+
+        #     path = self.find_shortest_path(player_pos, pods, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         return DriveMove.LIFT_POD
+
+        # if len(path) > 1:
+        #     next_x, next_y = path[1] 
+        #     if next_x > player_x:
+        #         return DriveMove.RIGHT
+        #     elif next_x < player_x:
+        #         return DriveMove.LEFT
+        #     elif next_y > player_y:
+        #         return DriveMove.UP
+        #     elif next_y < player_y:
+        #         return DriveMove.DOWN
+
+        # return DriveMove.NONE
+
+
+        # player_x, player_y = sensor_data[SensorData.PLAYER_LOCATION]
+        # player_pos = (player_x, player_y)
+
+        # self.carrying_pod_id = next(
+        #     (pair[1] for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS] if pair[0] == self.drive_id), 
+        #     None
+        # )
+
+        # carrying_pod = self.carrying_pod_id is not None
+
+        # if carrying_pod:
+        #     goals = sensor_data[SensorData.GOAL_LOCATIONS]
+        #     path = self.find_shortest_path(player_pos, goals, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         self.collected_pods.add(self.carrying_pod_id)
+        #         self.carrying_pod_id = NONE
+        #         return DriveMove.DROP_POD
+        # else:
+        #     # pods = sensor_data[SensorData.REAL_TIME_POD_LOCATIONS]
+        #     pods = [pod for pod in sensor_data[SensorData.REAL_TIME_POD_LOCATIONS] if pod[0] not in self.collected_pods]
+
+        #     if not pods:
+        #         return DriveMove.NONE  # No more pods to collect
+
+        #     path = self.find_shortest_path(player_pos, pods, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         self.carrying_pod_id = sensor_data[SensorData.REAL_TIME_POD_LOCATIONS][pods.index(path[0])][0]
+        #         return DriveMove.LIFT_POD
+
+        # if len(path) > 1:
+        #     next_x, next_y = path[1] 
+        #     if next_x > player_x:
+        #         return DriveMove.RIGHT
+        #     elif next_x < player_x:
+        #         return DriveMove.LEFT
+        #     elif next_y > player_y:
+        #         return DriveMove.UP
+        #     elif next_y < player_y:
+        #         return DriveMove.DOWN
+
+        # return DriveMove.NONE
+
+
+        # player_x, player_y = sensor_data[SensorData.PLAYER_LOCATION]
+        # player_pos = (player_x, player_y)
+
+        # # Get the pod ID we are currently carrying (if any)
+        # self.carrying_pod_id = next(
+        #     (pair[1] for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS] if pair[0] == self.drive_id), 
+        #     None
+        # )
+
+        # carrying_pod = self.carrying_pod_id is not None
+
+        # if carrying_pod:
+        #     # If carrying a pod, check if we've reached a goal and drop it off
+        #     goals = sensor_data[SensorData.GOAL_LOCATIONS]
+        #     path = self.find_shortest_path(player_pos, goals, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         # Drop the pod and add it to the collected pods set
+        #         self.collected_pods.add(self.carrying_pod_id)
+        #         self.carrying_pod_id = None  # Reset carrying pod ID
+        #         return DriveMove.DROP_POD
+        # else:
+        #     # If not carrying a pod, find the next available pod that hasn't been collected
+        #     pods = [pod for pod in sensor_data[SensorData.REAL_TIME_POD_LOCATIONS] 
+        #             if pod[0] not in self.collected_pods]  # Filter out collected pods
+            
+        #     if not pods:
+        #         return DriveMove.NONE  # No more pods to collect
+
+        #     # Find the shortest path to one of the uncollected pods
+        #     path = self.find_shortest_path(player_pos, pods, sensor_data)
+
+        #     if not path:
+        #         return DriveMove.NONE
+
+        #     if len(path) == 1 and path[0] == player_pos:
+        #         # Pick up the pod
+        #         self.carrying_pod_id = sensor_data[SensorData.REAL_TIME_POD_LOCATIONS][pods.index(path[0])][0]
+        #         return DriveMove.LIFT_POD
+
+        # # If there are still steps left in the path, move towards the next tile
+        # if len(path) > 1:
+        #     next_x, next_y = path[1] 
+        #     if next_x > player_x:
+        #         return DriveMove.RIGHT
+        #     elif next_x < player_x:
+        #         return DriveMove.LEFT
+        #     elif next_y > player_y:
+        #         return DriveMove.UP
+        #     elif next_y < player_y:
+        #         return DriveMove.DOWN
+
+        # return DriveMove.NONE
+
+        player_x, player_y = sensor_data[SensorData.PLAYER_LOCATION]
+        player_pos = (player_x, player_y)
+
+        # Get the pod ID we are currently carrying (if any)
+        self.carrying_pod_id = next(
+            (pair[1] for pair in sensor_data[SensorData.DRIVE_LIFTED_POD_PAIRS] if pair[0] == self.drive_id), 
+            None
+        )
+
+        carrying_pod = self.carrying_pod_id is not None
+
+        if carrying_pod:
+            # If carrying a pod, check if we've reached a goal and drop it off
+            goals = sensor_data[SensorData.GOAL_LOCATIONS]
+            path = self.find_shortest_path(player_pos, goals, sensor_data)
+
+            if not path:
+                return DriveMove.NONE
+
+            if len(path) == 1 and path[0] == player_pos:
+                # Drop the pod and add it to the collected pods set
+                self.collected_pods.add(self.carrying_pod_id)
+                # self.carrying_pod_id = None  # Reset carrying pod ID
+                print(f"Dropped off pod ID: {self.collected_pods}")
+
+                return DriveMove.DROP_POD
+        else:
+            # If not carrying a pod, find the next available pod that hasn't been collected
+            pods = []
+
+            for pod in sensor_data[SensorData.REAL_TIME_POD_LOCATIONS]:
+                if pod not in self.collected_pods:
+                    pods.append(pod)
+            
+
+            # pods = [pod for pod in sensor_data[SensorData.REAL_TIME_POD_LOCATIONS] 
+            #         if pod[0] not in self.collected_pods]  # Filter out collected pods
+            
+            if not pods:
+                return DriveMove.NONE  # No more pods to collect
+
+            # Find the shortest path to one of the uncollected pods
+            path = self.find_shortest_path(player_pos, pods, sensor_data)
+
+            if not path:
+                return DriveMove.NONE
+
+            if len(path) == 1 and path[0] == player_pos:
+                # Pick up the pod
+                # self.carrying_pod_id = sensor_data[SensorData.REAL_TIME_POD_LOCATIONS][pods.index(path[0])][0]
+                # print(f"Picked up pod ID: {self.carrying_pod_id}")
+                # return DriveMove.LIFT_POD
+
+                pod_to_pick_up = None
+                for pod in pods:
+                    if pod[1] == path[0]:  # pod[1] contains the coordinates, path[0] is the target position
+                        pod_to_pick_up = pod
+                        break
+                if pod_to_pick_up:
+                    self.carrying_pod_id = pod_to_pick_up[0]  # pod[0] contains the pod ID
+                    print(f"Picked up pod ID: {self.carrying_pod_id}")
+                    return DriveMove.LIFT_POD
+
+        # If there are still steps left in the path, move towards the next tile
+        if len(path) > 1:
+            next_x, next_y = path[1] 
+            if next_x > player_x:
+                return DriveMove.RIGHT
+            elif next_x < player_x:
+                return DriveMove.LEFT
+            elif next_y > player_y:
+                return DriveMove.UP
+            elif next_y < player_y:
+                return DriveMove.DOWN
+
         return DriveMove.NONE
 
 
+
+            
+
+
+            
